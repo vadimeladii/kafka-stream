@@ -2,6 +2,8 @@ package md.springboot.processor;
 
 import lombok.RequiredArgsConstructor;
 import md.springboot.data.Purchase;
+import md.springboot.data.PurchasePattern;
+import md.springboot.data.converter.PurchasePatternConverter;
 import md.springboot.data.converter.PurchaseStoreConverter;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -18,24 +20,35 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class KafkaStreamProcessor {
 
-    @Value("${kafka.topic.input}")
-    private String inputTopic;
+    @Value("${kafka.topic.source}")
+    private String sourceTopic;
 
-    @Value("${kafka.topic.even-output}")
-    private String outputTopic;
+    @Value("${kafka.topic.store}")
+    private String storeTopic;
+
+    @Value("${kafka.topic.reward}")
+    private String rewardTopic;
+
+    @Value("${kafka.topic.pattern}")
+    private String patternTopic;
 
     private final PurchaseStoreConverter purchaseStoreConverter;
+    private final PurchasePatternConverter purchasePatternConverter;
 
     @Bean
     public KStream<String, Purchase> kStream(StreamsBuilder kStreamBuilder) {
-        KStream<String, Purchase> stream = kStreamBuilder.stream(inputTopic, Consumed.with(Serdes.String(), Serdes.serdeFrom(
+        KStream<String, Purchase> stream = kStreamBuilder.stream(sourceTopic, Consumed.with(Serdes.String(), Serdes.serdeFrom(
                 new JsonSerializer<>(), new JsonDeserializer<>(Purchase.class))));
 
         KStream<String, Purchase> maskingPurchaseKStream = stream.mapValues((s, purchase) -> purchaseStoreConverter.convert(purchase));
 
         maskingPurchaseKStream
-                .peek((s, purchase) -> System.out.println(purchase))
-                .to(outputTopic,
+                .mapValues((s, purchase) -> purchasePatternConverter.convert(purchase))
+                .to(patternTopic,
+                        Produced.with(Serdes.String(), Serdes.serdeFrom(new JsonSerializer<>(), new JsonDeserializer<>(PurchasePattern.class))));
+
+        maskingPurchaseKStream
+                .to(storeTopic,
                         Produced.with(Serdes.String(), Serdes.serdeFrom(new JsonSerializer<>(), new JsonDeserializer<>(Purchase.class))));
 
         return stream;

@@ -1,6 +1,5 @@
 package md.springboot.data;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,5 +12,6 @@ public class Purchase {
     private String creditCardNumber;
     private String itemPurchased;
     private Double quantity;
-    private String purchaseTime;
+    private String purchaseDate;
+    private String zipCode;
 }

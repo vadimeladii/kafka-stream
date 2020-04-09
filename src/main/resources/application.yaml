@@ -6,5 +6,7 @@ spring:
 ---
 kafka:
   topic:
-    input: topic1
-    even-output: topic2
+    source: source
+    store: output-store
+    reward: output-reward
+    pattern: output-pattern
