@@ -1,18 +1,8 @@
 spring:
   kafka:
     client-id: kafka-stream
-    bootstrap-servers:
-      - localhost:9092
-    template:
-      default-topic: topic1
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.LongSerializer
     consumer:
-      group-id: random-consumer
       auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.LongDeserializer
 ---
 kafka:
   topic:
