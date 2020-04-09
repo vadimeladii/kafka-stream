@@ -13,14 +13,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PurchaseServiceImpl implements PurchaseService {
 
-    @Value("${kafka.topic.input}")
-    private String inputTopic;
+    @Value("${kafka.topic.source}")
+    private String sourceTopic;
 
     private final KafkaTemplate<String, Purchase> kafkaTemplate;
 
     @Override
     public void create(Purchase purchase) {
         System.out.println("Produced :: " + purchase);
-        this.kafkaTemplate.send(inputTopic, UUID.randomUUID().toString(), purchase);
+        this.kafkaTemplate.send(sourceTopic, UUID.randomUUID().toString(), purchase);
     }
 }

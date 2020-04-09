@@ -16,6 +16,7 @@ public class PurchaseStoreConverter implements Converter<Purchase, Purchase> {
         purchase.setItemPurchased(data.getItemPurchased());
         purchase.setPurchaseDate(data.getPurchaseDate());
         purchase.setQuantity(data.getQuantity());
+        purchase.setPrice(data.getPrice());
         purchase.setZipCode(data.getZipCode());
         purchase.setCreditCardNumber((StringUtils.overlay(
                 data.getCreditCardNumber(),

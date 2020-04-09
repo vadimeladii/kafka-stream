@@ -1,6 +1,8 @@
 package md.springboot.config;
 
 import md.springboot.data.Purchase;
+import md.springboot.data.PurchaseAccumulator;
+import md.springboot.data.PurchasePattern;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
@@ -17,19 +19,51 @@ import java.util.Map;
 public class KafkaConsumerConfig {
 
     @Bean
-    public ConsumerFactory<String, Purchase> consumerFactory() {
+    public Map<String, Object> consumerConfigs() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "group1");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new JsonDeserializer<>(Purchase.class));
+        return props;
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Purchase> purchaseListenerContainerFactory() {
+    public ConsumerFactory<String, Purchase> consumerPurchaseStoreFactory() {
+        return new DefaultKafkaConsumerFactory<>(consumerConfigs(), new StringDeserializer(),
+                new JsonDeserializer<>(Purchase.class));
+    }
+
+    @Bean
+    public ConsumerFactory<String, PurchasePattern> consumerPurchasePatternFactory() {
+        return new DefaultKafkaConsumerFactory<>(consumerConfigs(), new StringDeserializer(),
+                new JsonDeserializer<>(PurchasePattern.class));
+    }
+
+    @Bean
+    public ConsumerFactory<String, PurchaseAccumulator> consumerAccumulatorPatternFactory() {
+        return new DefaultKafkaConsumerFactory<>(consumerConfigs(), new StringDeserializer(),
+                new JsonDeserializer<>(PurchaseAccumulator.class));
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, Purchase> purchaseStoreListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, Purchase> factory = new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory());
+        factory.setConsumerFactory(consumerPurchaseStoreFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, PurchasePattern> purchasePatternListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, PurchasePattern> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerPurchasePatternFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, PurchaseAccumulator> purchaseAccumulatorListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, PurchaseAccumulator> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerAccumulatorPatternFactory());
         return factory;
     }
 }

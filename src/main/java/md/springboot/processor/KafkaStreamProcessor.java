@@ -2,7 +2,9 @@ package md.springboot.processor;
 
 import lombok.RequiredArgsConstructor;
 import md.springboot.data.Purchase;
+import md.springboot.data.PurchaseAccumulator;
 import md.springboot.data.PurchasePattern;
+import md.springboot.data.converter.PurchaseAccumulatorConverter;
 import md.springboot.data.converter.PurchasePatternConverter;
 import md.springboot.data.converter.PurchaseStoreConverter;
 import org.apache.kafka.common.serialization.Serdes;
@@ -23,17 +25,18 @@ public class KafkaStreamProcessor {
     @Value("${kafka.topic.source}")
     private String sourceTopic;
 
-    @Value("${kafka.topic.store}")
-    private String storeTopic;
-
     @Value("${kafka.topic.reward}")
     private String rewardTopic;
 
     @Value("${kafka.topic.pattern}")
     private String patternTopic;
 
+    @Value("${kafka.topic.store}")
+    private String storeTopic;
+
     private final PurchaseStoreConverter purchaseStoreConverter;
     private final PurchasePatternConverter purchasePatternConverter;
+    private final PurchaseAccumulatorConverter purchaseAccumulatorConverter;
 
     @Bean
     public KStream<String, Purchase> kStream(StreamsBuilder kStreamBuilder) {
@@ -41,6 +44,11 @@ public class KafkaStreamProcessor {
                 new JsonSerializer<>(), new JsonDeserializer<>(Purchase.class))));
 
         KStream<String, Purchase> maskingPurchaseKStream = stream.mapValues((s, purchase) -> purchaseStoreConverter.convert(purchase));
+
+        maskingPurchaseKStream
+                .mapValues((s, purchase) -> purchaseAccumulatorConverter.convert(purchase))
+                .to(rewardTopic,
+                        Produced.with(Serdes.String(), Serdes.serdeFrom(new JsonSerializer<>(), new JsonDeserializer<>(PurchaseAccumulator.class))));
 
         maskingPurchaseKStream
                 .mapValues((s, purchase) -> purchasePatternConverter.convert(purchase))
